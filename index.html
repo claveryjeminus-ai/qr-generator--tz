@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reusable QR Code Generator</title>
+    <!-- Uses a secure, reliable QR library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 450px;
+            margin: 50px auto;
+            padding: 25px;
+            text-align: center;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            color: #333;
+        }
+        h2 { margin-bottom: 5px; color: #111; }
+        p { font-size: 14px; color: #666; margin-bottom: 25px; }
+        label { display: block; text-align: left; font-weight: 600; margin-top: 15px; font-size: 14px; }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0 16px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        button:hover { background: #0056b3; }
+        #qr-container {
+            margin-top: 30px;
+            display: none;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        canvas {
+            background: white;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .download-btn {
+            background: #28a745;
+            margin-top: 15px;
+        }
+        .download-btn:hover { background: #218838; }
+    </style>
+</head>
+<body>
+
+    <h2>QR Code Generator</h2>
+    <p>Create reusable call links or contact cards</p>
+
+    <label for="type">What should the QR code do?</label>
+    <select id="type" onchange="toggleInputs()">
+        <option value="call">Prompt a Direct Call</option>
+        <option value="contact">Save Contact Details (vCard)</option>
+    </select>
+
+    <!-- Fields for Direct Call -->
+    <div id="call-fields">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" placeholder="+1234567890">
+    </div>
+
+    <!-- Fields for Saving Contact -->
+    <div id="contact-fields" style="display:none;">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" placeholder="John Doe">
+        
+        <label for="c-phone">Phone Number</label>
+        <input type="tel" id="c-phone" placeholder="+1234567890">
+        
+        <label for="email">Email (Optional)</label>
+        <input type="email" id="email" placeholder="john@example.com">
+    </div>
+
+    <button onclick="generateQR()">Generate Clean QR Code</button>
+
+    <!-- Output Section -->
+    <div id="qr-container">
+        <canvas id="qr"></canvas>
+        <button class="download-btn" onclick="downloadQR()">Download Clean PNG</button>
+    </div>
+
+    <script>
+        function toggleInputs() {
+            const type = document.getElementById('type').value;
+            document.getElementById('call-fields').style.display = type === 'call' ? 'block' : 'none';
+            document.getElementById('contact-fields').style.display = type === 'contact' ? 'block' : 'none';
+        }
+
+        function generateQR() {
+            const type = document.getElementById('type').value;
+            let qrData = '';
+
+            if (type === 'call') {
+                const phone = document.getElementById('phone').value.trim();
+                if (!phone) return alert('Please enter a phone number.');
+                qrData = `tel:${phone}`;
+            } else {
+                const name = document.getElementById('name').value.trim();
+                const phone = document.getElementById('c-phone').value.trim();
+                const email = document.getElementById('email').value.trim();
+                
+                if (!name || !phone) return alert('Name and Phone number are required.');
+                
+                // MECARD format: globally recognized by iOS and Android contact scanners
+                qrData = `MECARD:N:${name};TEL:${phone};EMAIL:${email};;`;
+            }
+
+            // Generate crisp, high-quality QR code
+            const qr = new QRious({
+                element: document.getElementById('qr'),
+                value: qrData,
+                size: 300,
+                level: 'H' // High error correction level for better scanning
+            });
+
+            document.getElementById('qr-container').style.display = 'block';
+        }
+
+        function downloadQR() {
+            const canvas = document.getElementById('qr');
+            const link = document.createElement('a');
+            link.download = 'clean-qr-code.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+
+</body>
+</html>
