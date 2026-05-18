@@ -3,148 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reusable QR Code Generator</title>
-    <!-- Uses a secure, reliable QR library -->
+    <title>Ultimate QR Code Workspace</title>
+    <!-- Secure QR Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #16a34a;
+            --success-hover: #15803d;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            max-width: 450px;
-            margin: 50px auto;
-            padding: 25px;
-            text-align: center;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            color: #333;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
         }
-        h2 { margin-bottom: 5px; color: #111; }
-        p { font-size: 14px; color: #666; margin-bottom: 25px; }
-        label { display: block; text-align: left; font-weight: 600; margin-top: 15px; font-size: 14px; }
-        select, input {
+        .container {
+            max-width: 900px;
             width: 100%;
-            padding: 12px;
-            margin: 6px 0 16px 0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        @media (min-width: 768px) {
+            .container { grid-template-columns: 1.2fr 0.8fr; }
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+        h2 { margin-top: 0; font-size: 22px; font-weight: 700; color: #1e293b; }
+        p { font-size: 14px; color: #64748b; margin-top: -8px; margin-bottom: 24px; }
+        label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        select, input, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
             box-sizing: border-box;
             font-size: 15px;
+            background: #fff;
+            color: var(--text);
         }
+        select:focus, input:focus, textarea:focus { outline: 2px solid var(--primary); border-color: transparent; }
+        .color-group { display: flex; gap: 12px; margin-bottom: 16px; }
+        .color-item { flex: 1; }
+        input[type="color"] { padding: 0; height: 40px; cursor: pointer; border-radius: 6px; }
         button {
             width: 100%;
-            padding: 14px;
-            background: #007bff;
+            padding: 12px;
+            background: var(--primary);
             color: white;
             cursor: pointer;
             border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 16px;
-            transition: background 0.2s;
-        }
-        button:hover { background: #0056b3; }
-        #qr-container {
-            margin-top: 30px;
-            display: none;
-            background: #f8f9fa;
-            padding: 20px;
             border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s;
         }
-        canvas {
-            background: white;
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 4px;
+        button:hover { background: var(--primary-hover); }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: var(--success-hover); }
+        .btn-secondary { background: #64748b; }
+        .btn-secondary:hover { background: #475569; }
+        #qr-container {
+            display: none;
+            text-align: center;
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px dashed #cbd5e1;
         }
-        .download-btn {
-            background: #28a745;
-            margin-top: 15px;
+        canvas { background: white; padding: 12px; border-radius: 8px; max-width: 100%; height: auto !important; }
+        .history-list { list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto; }
+        .history-item {
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .download-btn:hover { background: #218838; }
+        .history-item:hover { border-color: var(--primary); background: #e2e8f0; }
+        .history-tag { font-weight: bold; font-size: 11px; text-transform: uppercase; color: var(--primary); }
+        .clear-btn { background: transparent; color: #ef4444; border: 1px solid #fca5a5; font-size: 12px; padding: 6px; margin-top: 15px; }
+        .clear-btn:hover { background: #fef2f2; }
     </style>
 </head>
 <body>
 
-    <h2>QR Code Generator</h2>
-    <p>Create reusable call links or contact cards</p>
+<div class="container">
+    <!-- Left Column: Settings and Inputs -->
+    <div class="card">
+        <h2>Ultimate QR Tool</h2>
+        <p>Create call links, vCards, Wi-Fi connectors, and messages instantly.</p>
 
-    <label for="type">What should the QR code do?</label>
-    <select id="type" onchange="toggleInputs()">
-        <option value="call">Prompt a Direct Call</option>
-        <option value="contact">Save Contact Details (vCard)</option>
-    </select>
+        <label for="type">Action Target</label>
+        <select id="type" onchange="toggleInputs()">
+            <option value="call">📞 Phone Prompt (Direct Call)</option>
+            <option value="contact">📇 Save Contact Card (vCard)</option>
+            <option value="wifi">📶 Connect to Wi-Fi Network</option>
+            <option value="whatsapp">💬 WhatsApp Pre-filled Message</option>
+        </select>
 
-    <!-- Fields for Direct Call -->
-    <div id="call-fields">
-        <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" placeholder="+1234567890">
+        <!-- Call Configuration -->
+        <div id="call-fields" class="input-panel">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" placeholder="+1234567890">
+        </div>
+
+        <!-- Contact Card Configuration -->
+        <div id="contact-fields" class="input-panel" style="display:none;">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" placeholder="Alex Carter">
+            <label for="c-phone">Phone Number</label>
+            <input type="tel" id="c-phone" placeholder="+1234567890">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="alex@company.com">
+        </div>
+
+        <!-- Wi-Fi Network Configuration -->
+        <div id="wifi-fields" class="input-panel" style="display:none;">
+            <label for="ssid">Network Name (SSID)</label>
+            <input type="text" id="ssid" placeholder="My Home Wi-Fi">
+            <label for="wifi-pass">Password</label>
+            <input type="password" id="wifi-pass" placeholder="••••••••">
+            <label for="wifi-type">Security Protocol</label>
+            <select id="wifi-type">
+                <option value="WPA">WPA/WPA2</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">Unsecured (Open)</option>
+            </select>
+        </div>
+
+        <!-- WhatsApp Configuration -->
+        <div id="whatsapp-fields" class="input-panel" style="display:none;">
+            <label for="wa-phone">WhatsApp Number (With Country Code)</label>
+            <input type="tel" id="wa-phone" placeholder="1234567890">
+            <label for="wa-msg">Pre-written Message</label>
+            <textarea id="wa-msg" rows="3" placeholder="Hello! I am scanning your QR code to get in touch."></textarea>
+        </div>
+
+        <!-- Visual Customization Engine -->
+        <div class="color-group">
+            <div class="color-item">
+                <label for="fg-color">Pixel Color</label>
+                <input type="color" id="fg-color" value="#000000">
+            </div>
+            <div class="color-item">
+                <label for="bg-color">Background Color</label>
+                <input type="color" id="bg-color" value="#ffffff">
+            </div>
+        </div>
+
+        <button onclick="processAndGenerate()">Generate QR Code</button>
+
+        <!-- Main Display Output Canvas -->
+        <div id="qr-container">
+            <canvas id="qr"></canvas>
+            <div class="action-grid">
+                <button class="btn-success" onclick="downloadQR()">Download PNG</button>
+                <button class="btn-secondary" onclick="copyQRToClipboard()">Copy Image</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Fields for Saving Contact -->
-    <div id="contact-fields" style="display:none;">
-        <label for="name">Full Name</label>
-        <input type="text" id="name" placeholder="John Doe">
-        
-        <label for="c-phone">Phone Number</label>
-        <input type="tel" id="c-phone" placeholder="+1234567890">
-        
-        <label for="email">Email (Optional)</label>
-        <input type="email" id="email" placeholder="john@example.com">
+    <!-- Right Column: Local Memory Bank (History Log) -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <h2>Local Memory Bank</h2>
+            <p>Your recent codes, stored securely on your browser device cache.</p>
+            <ul id="history-box" class="history-list"></ul>
+        </div>
+        <button class="clear-btn" onclick="clearHistoryLog()">Clear Stored Log</button>
     </div>
+</div>
 
-    <button onclick="generateQR()">Generate Clean QR Code</button>
+<script>
+    // System Lifecycle Hooks
+    window.onload = function() {
+        renderSavedHistory();
+    };
 
-    <!-- Output Section -->
-    <div id="qr-container">
-        <canvas id="qr"></canvas>
-        <button class="download-btn" onclick="downloadQR()">Download Clean PNG</button>
-    </div>
+    function toggleInputs() {
+        const type = document.getElementById('type').value;
+        document.querySelectorAll('.input-panel').forEach(panel => panel.style.display = 'none');
+        document.getElementById(`${type}-fields`).style.display = 'block';
+    }
 
-    <script>
-        function toggleInputs() {
-            const type = document.getElementById('type').value;
-            document.getElementById('call-fields').style.display = type === 'call' ? 'block' : 'none';
-            document.getElementById('contact-fields').style.display = type === 'contact' ? 'block' : 'none';
-        }
+    function processAndGenerate(rawPayload = null, targetType = null) {
+        let payload = "";
+        let typeLabel = "";
+        let descriptor = "";
 
-        function generateQR() {
-            const type = document.getElementById('type').value;
-            let qrData = '';
+        if (rawPayload) {
+            payload = rawPayload;
+            typeLabel = targetType;
+            descriptor = "Restored Configuration";
+        } else {
+            const currentType = document.getElementById('type').value;
+            typeLabel = currentType;
 
-            if (type === 'call') {
-                const phone = document.getElementById('phone').value.trim();
-                if (!phone) return alert('Please enter a phone number.');
-                qrData = `tel:${phone}`;
-            } else {
+            if (currentType === 'call') {
+                const val = document.getElementById('phone').value.trim();
+                if (!val) return alert('Phone number required.');
+                payload = `tel:${val}`;
+                descriptor = val;
+            } else if (currentType === 'contact') {
                 const name = document.getElementById('name').value.trim();
                 const phone = document.getElementById('c-phone').value.trim();
                 const email = document.getElementById('email').value.trim();
-                
-                if (!name || !phone) return alert('Name and Phone number are required.');
-                
-                // MECARD format: globally recognized by iOS and Android contact scanners
-                qrData = `MECARD:N:${name};TEL:${phone};EMAIL:${email};;`;
+                if (!name || !phone) return alert('Name and Phone are required.');
+                payload = `MECARD:N:${name};TEL:${phone};EMAIL:${email};;`;
+                descriptor = name;
+            } else if (currentType === 'wifi') {
+                const ssid = document.getElementById('ssid').value.trim();
+                const pass = document.getElementById('wifi-pass').value;
+                const sec = document.getElementById('wifi-type').value;
+                if (!ssid) return alert('Network Name (SSID) required.');
+                payload = `WIFI:S:${ssid};T:${sec};P:${pass};;`;
+                descriptor = ssid;
+            } else if (currentType === 'whatsapp') {
+                const waPhone = document.getElementById('wa-phone').value.trim();
+                const waMsg = encodeURIComponent(document.getElementById('wa-msg').value);
+                if (!waPhone) return alert('WhatsApp number required.');
+                payload = `https://wa.me/${waPhone}?text=${waMsg}`;
+                descriptor = `Chat: ${waPhone}`;
             }
-
-            // Generate crisp, high-quality QR code
-            const qr = new QRious({
-                element: document.getElementById('qr'),
-                value: qrData,
-                size: 300,
-                level: 'H' // High error correction level for better scanning
-            });
-
-            document.getElementById('qr-container').style.display = 'block';
+            
+            saveToMemoryBank(typeLabel, descriptor, payload);
         }
 
-        function downloadQR() {
+        // Render QR graphics
+        const fg = document.getElementById('fg-color').value;
+        const bg = document.getElementById('bg-color').value;
+
+        new QRious({
+            element: document.getElementById('qr'),
+            value: payload,
+            size: 350,
+            level: 'H',
+            foreground: fg,
+            background: bg
+        });
+
+        document.getElementById('qr-container').style.display = 'block';
+    }
+
+    // Dynamic Processing Utilities
+    function downloadQR() {
+        const link = document.createElement('a');
+        link.download = 'custom-qr-code.png';
+        link.href = document.getElementById('qr').toDataURL();
+        link.click();
+    }
+
+    async function copyQRToClipboard() {
+        try {
             const canvas = document.getElementById('qr');
-            const link = document.createElement('a');
-            link.download = 'clean-qr-code.png';
-            link.href = canvas.toDataURL();
-            link.click();
+            canvas.toBlob(async (blob) => {
+                const item = new ClipboardItem({ "image/png": blob });
+                await navigator.clipboard.write([item]);
+                alert("QR Code copied right to your clipboard!");
+            });
+        } catch (err) {
+            alert("Clipboard write failed. Use the Download PNG fallback.");
         }
-    </script>
+    }
+
+    // Storage System Engines
+    function saveToMemoryBank(type, label, payload) {
+        let history = JSON.parse(localStorage.getItem('qr_history')) || [];
+        // Block duplicates
+        history = history.filter(item => item.payload !== payload);
+        history.unshift({ type, label, payload, date: new Date().toLocaleDateString() });
+        // Max limit processing
+        if (history.length > 15) history.pop();
+        localStorage.setItem('qr_history', JSON.stringify(history));
+        renderSavedHistory();
+    }
+
+    function renderSavedHistory() {
+        const container = document.getElementById('history-box');
+        const history = JSON.parse(localStorage.getItem('qr_history')) || [];
+        container.innerHTML = history.length === 0 ? '<li style="color:#94a3b8; font-size:13px; text-align:center; padding-top:20px;">No saved configurations</li>' : '';
+
+        history.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'history-item';
+            li.onclick = () => processAndGenerate(item.payload, item.type);
+            li.innerHTML = `
+                <div>
+                    <span class="history-tag">[${item.type}]</span> 
+                    <strong style="margin-left: 5px;">${item.label}</strong>
+                </div>
+                <span style="font-size:11px; color:#94a3b8;">${item.date}</span>
+            `;
+            container.appendChild(li);
+        });
+    }
+
+    function clearHistoryLog() {
+        if(confirm("Confirm deletion of your browser-cached QR history?")) {
+            localStorage.removeItem('qr_history');
+            renderSavedHistory();
+        }
+    }
+</script>
 
 </body>
 </html>
